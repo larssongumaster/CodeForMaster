@@ -229,7 +229,7 @@ function pilotComp(path, true_val, Y, dt, error, chains, ratio, particles, itera
     write(f, @sprintf("True Vals: [%f,%f,%f]\n", true_val[1], true_val[2], true_val[3]));
     write(f, @sprintf("Chains: %d, Particles: %d, Iterations: %d\n\n", chains, particles, iterations));
     
-    p = plot(Y, title="", label="", xlabel="Time", xticks = (Int.(LinRange(0, length(Y), 5)), string.(Int.(LinRange(0, length(Y)*dt, 5)))), ylabel="Process value", lw = 2)
+    p = plot(Y, title="", label="", xlabel="Time", xticks = (Int.(LinRange(0, length(Y), 5)), string.(Int.(LinRange(0, length(Y)*dt, 5)))), ylabel="Process value", lw = 2, guidefontsize=15)
     display(p)
     savefig(path*"/data.png")
 
@@ -278,7 +278,7 @@ function pilotComp(path, true_val, Y, dt, error, chains, ratio, particles, itera
     elapsed3  = (mean(tAD/(iterations/iterations3)))
     elapsed3v =  (std(tAD/(iterations/iterations3)))
 
-    @printf("Time Elapsed for AD1: %.0f ± %.0f s\n", elapsed3, elapsed3v)    
+    @printf("Time Elapsed for AD2: %.0f ± %.0f s\n", elapsed3, elapsed3v)    
     write(f, @sprintf("Time Elapsed for AD1: %.0f ± %.0f s\n", elapsed3, elapsed3v))
 
     # plot comparison #
@@ -333,9 +333,9 @@ function pilotComp(path, true_val, Y, dt, error, chains, ratio, particles, itera
     close(f)
 
     f = open(path*"/tab.txt", "w");
-    write(f, @sprintf("AMH & %.0f & %.0f s & (%.2f ± %.2f, %.4f ± %.4f, %.4f ± %.4f) & (%.2f, %.4f, %.4f) & %f ± %f \\\\ \n", mean(tMH), std(tMH), resMH[1], varMH[1], resMH[2], varMH[2], resMH[3], varMH[3], absMH[1], absMH[2], absMH[3], meanLikMH,varLikMH))
-    write(f, @sprintf("SAD1 & %.0f & %.0f s & (%.2f ± %.2f, %.4f ± %.4f, %.4f ± %.4f) & (%.2f, %.4f, %.4f) & %f ± %f \\\\ \n", mean(tAD), std(tAD), resAD1[1], varAD1[1], resAD1[2], varAD1[2], resAD1[3], varAD1[3], absAD1[1], absAD1[2], absAD1[3], meanLikAD1,varLikAD1))
-    write(f, @sprintf("SAD2 & %.0f & %.0f s & (%.2f ± %.2f, %.4f ± %.4f, %.4f ± %.4f) & (%.2f, %.4f, %.4f) & %f ± %f \\\\ [1ex]\n", elapsed3, elapsed3v, resAD2[1], varAD2[1], resAD2[2], varAD2[2], resAD2[3], varAD2[3], absAD2[1], absAD2[2], absAD2[3], meanLikAD2,varLikAD2))
+    write(f, @sprintf("AMH & %.0f & %.0f s & (%.2f ± %.2f, %.4f ± %.4f, %.4f ± %.4f)  & %.4f ± %.4f \\\\ \n", mean(tMH), std(tMH), resMH[1], varMH[1], resMH[2], varMH[2], resMH[3], varMH[3], meanLikMH,varLikMH))
+    write(f, @sprintf("SAD1 & %.0f & %.0f s & (%.2f ± %.2f, %.4f ± %.4f, %.4f ± %.4f)  & %.4f ± %.4f \\\\ \n", mean(tAD), std(tAD), resAD1[1], varAD1[1], resAD1[2], varAD1[2], resAD1[3], varAD1[3], meanLikAD1,varLikAD1))
+    write(f, @sprintf("SAD2 & %.0f & %.0f s & (%.2f ± %.2f, %.4f ± %.4f, %.4f ± %.4f)  & %.4f ± %.4f \\\\ [1ex]\n", elapsed3, elapsed3v, resAD2[1], varAD2[1], resAD2[2], varAD2[2], resAD2[3], varAD2[3], meanLikAD2,varLikAD2))
     close(f)
 
     return [resMH, resAD1, resAD2], [absMH, absAD1, absAD2], [meanLikMH, meanLikAD1, meanLikAD2]
@@ -346,7 +346,7 @@ function plot_path(arr, title, blue, val = -1000);
     c = length(arr[:,1])
     av = mean(arr, dims = 1);
     
-    pl = plot(arr[1,:], xlabel="Iterations", ylabel=title, label="Individual Paths", lw = 1, lc=:gray)
+    pl = plot(arr[1,:], xlabel="Iterations", ylabel=title, label="Individual Paths", lw = 1, lc=:gray, guidefontsize=15)
     for i in 2:c
         plot!(arr[i,:], label = "", lw = 1, lc=:gray)
     end
@@ -368,7 +368,7 @@ function plot_comp(arrMH, arrAD, comp, title, val = -1000);
     avAD = mean(arrAD, dims = 1);
     #stdAD = std(arrAD, dims = 1);
     
-    pl = plot(avMH[:], xlabel="Iterations", ylabel=title, label="AMH", lw = 2, lc=:blue)
+    pl = plot(avMH[:], xlabel="Iterations", ylabel=title, label="AMH", lw = 2, lc=:blue, guidefontsize=15)
     plot!(avAD[:], label="SAD", lw = 2, lc=:red)
     vline!([comp],label = "Cut for Comparison", lw = 1.5, lc=:black, linestyle=:dash)
     if val != -1000
@@ -391,12 +391,12 @@ X, Y = EulerMaruyama(theta, obs, dt, start, Normal(0,error));
 
 # comparison #
 chains = 25;
-ratio = 5;
+ratio = 1;
 particles = 200;
 iterations = 3000;
 
 prior_alpha = Uniform(0,25);
-prior_beta  = Uniform(0,0.1);
+prior_beta  = Uniform(0,0.05);
 prior_sigma = Uniform(0,1);
 
 prior = product_distribution(prior_alpha, prior_beta, prior_sigma);

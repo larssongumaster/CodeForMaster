@@ -132,23 +132,18 @@ function likelihood_test(name, Y, theta, dt, obs_error, log_scale=false)
         index = index + 1
     end
 
-    p = plot(var_result, xlabel = "Particles", ylabel = "Variance", label = "(l)", xticks = (10:10:50, string.(200:200:1000)), lc=:blue, lw=2,legend=:topleft)
-    plot!(twinx(), time_result, ylabel = "Time in Seconds", label = "(r)", lc=:red, lw=2,legend=:topright)
-    display(p)
-    savefig(name*".png")
-
-    p = plot(var_result, label = "", xlabel = "Particles", ylabel = "Variance", xticks = (10:10:50, string.(200:200:1000)), lc=:blue, lw=2)
+    p = plot(var_result, label = "", xlabel = "Particles", ylabel = "Variance", xticks = (10:10:50, string.(200:200:1000)), lc=:blue, lw=2, guidefontsize=15)
     display(p)
     savefig(name*"-var.png")
 
-    p = plot(time_result, label = "", xlabel = "Particles", ylabel = "Time in Seconds", xticks = (10:10:50, string.(200:200:1000)), lc=:red, lw=2)
+    p = plot(time_result, label = "", xlabel = "Particles", ylabel = "Time in Seconds", xticks = (10:10:50, string.(200:200:1000)), lc=:red, lw=2, guidefontsize=15)
     display(p)
     savefig(name*"-time.png")
 
     return
 end
 
-function gradient_test(Y, theta, dt, obs_error, log_scale=false)
+function gradient_test(name, Y, theta, dt, obs_error, log_scale=false)
 
     particles = 1:50
     reps = 200
@@ -172,10 +167,31 @@ function gradient_test(Y, theta, dt, obs_error, log_scale=false)
         index = index + 1
     end
 
-    p = plot(var_result[1,:], xlabel = "Particles", ylabel = "Variance of α", label = "(l)", xticks = (10:10:50, string.(200:200:1000)), lc=:blue, lw=2,legend=:topleft)
-    plot!(twinx(), var_result[2,:], ylabel = "Variance of β", label = "(r)", lc=:red, lw=2,legend=:topright)
-    display(p)
+    if log_scale
+        p = plot(var_result[1,:], label = "", xlabel = "Particles", ylabel = "Variance of α", xticks = (10:10:50, string.(200:200:1000)), lc=:red, lw=2, guidefontsize=15)
+        display(p)
+        savefig(name*"-alpha.png")
 
+        p = plot(var_result[2,:], label = "", xlabel = "Particles", ylabel = "Variance of β", xticks = (10:10:50, string.(200:200:1000)), lc=:red, lw=2, guidefontsize=15)
+        display(p)
+        savefig(name*"-beta.png")
+
+        p = plot(var_result[3,:], label = "", xlabel = "Particles", ylabel = "Variance of σ", xticks = (10:10:50, string.(200:200:1000)), lc=:red, lw=2, guidefontsize=15)
+        display(p)
+        savefig(name*"-sigma.png")    
+    else
+        p = plot(var_result[1,:], label = "", xlabel = "Particles", ylabel = "Variance of α", xticks = (10:10:50, string.(200:200:1000)), lc=:blue, lw=2, guidefontsize=15)
+        display(p)
+        savefig(name*"-alpha.png")
+
+        p = plot(var_result[2,:], label = "", xlabel = "Particles", ylabel = "Variance of β", xticks = (10:10:50, string.(200:200:1000)), lc=:blue, lw=2, guidefontsize=15)
+        display(p)
+        savefig(name*"-beta.png")
+
+        p = plot(var_result[3,:], label = "", xlabel = "Particles", ylabel = "Variance of σ", xticks = (10:10:50, string.(200:200:1000)), lc=:blue, lw=2, guidefontsize=15)
+        display(p)
+        savefig(name*"-sigma.png")
+    end
 
     return
 end
@@ -197,18 +213,12 @@ likelihood_test("L-15-001-01",  Y, theta,  dt, 1);
 likelihood_test("L-14-002-015", Y, theta1, dt, 1);
 likelihood_test("L-20-01-01",   Y, theta2, dt, 1);
 
+gradient_test("G-15-001-01",  Y, theta, dt, 1, false);
+gradient_test("GL-15-001-01", Y, log.(theta), dt, 1, true);
 
-gradient_test(Y, theta, dt, 1, false);
-savefig("G-15-001-01.png")
-gradient_test(Y, log.(theta), dt, 1, true);
-savefig("GL-15-001-01.png")
+gradient_test("G-14-002-015",  Y, theta1, dt, 1, false);
+gradient_test("GL-14-002-015", Y, log.(theta1), dt, 1, true);
 
-gradient_test(Y, theta1, dt, 1, false);
-savefig("G-14-002-015.png")
-gradient_test(Y, log.(theta1), dt, 1, true);
-savefig("GL-14-002-015.png")
+gradient_test("G-20-01-01",  Y, theta2, dt, 1, false);
+gradient_test("GL-20-01-01", Y, log.(theta2), dt, 1, true);
 
-gradient_test(Y, theta2, dt, 1, false);
-savefig("G-20-01-01.png")
-gradient_test(Y, log.(theta2), dt, 1, true);
-savefig("GL-20-01-01.png")

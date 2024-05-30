@@ -290,7 +290,7 @@ function pilotComp(path, true_val, Y, subjects, dt, error, chains, ratio, partic
     write(f, @sprintf("True Vals: [%f,%f,%f]\n", true_val[1], true_val[2], true_val[3]));
     write(f, @sprintf("Subjects: %d, Chains: %d, Particles: %d, Iterations: %d\n\n", subjects, chains, particles, iterations));
     
-    p = plot(Y[1,:], title="", label="", xlabel="Time", xticks = (Int.(LinRange(0, length(Y[1,:]), 5)), string.(Int.(LinRange(0, length(Y[1,:])*dt, 5)))), ylabel="Process value", lw = 2)
+    p = plot(Y[1,:], title="", label="", xlabel="Time", xticks = (Int.(LinRange(0, length(Y[1,:]), 5)), string.(Int.(LinRange(0, length(Y[1,:])*dt, 5)))), ylabel="Process value", lw = 2, guidefontsize=15)
     for i in 2:subjects
          plot!(p,Y[i,:],label="", lw=2);
     end
@@ -316,7 +316,8 @@ function pilotComp(path, true_val, Y, subjects, dt, error, chains, ratio, partic
     savefig(path*"/MH_likelihood.png")
 
     burnin = Int(round(iterations/2))
-    resMH = [mean(pop[:,burnin:iterations]),mean(com[1,:,burnin:iterations]),mean(com[2,:,burnin:iterations])]
+    resMH = [mean(pop[:,burnin:iterations]), mean(com[1,:,burnin:iterations]), mean(com[2,:,burnin:iterations])]
+    varMH = [ std(pop[:,burnin:iterations]),  std(com[1,:,burnin:iterations]),  std(com[2,:,burnin:iterations])]
 
     # ad1 #
     rAD, lAD, tAD = pilotAD(Y, dt, error, chains, start, particles, iterations, true);
@@ -333,14 +334,15 @@ function pilotComp(path, true_val, Y, subjects, dt, error, chains, ratio, partic
     plot_path(lAD,"loglikelihood",false)
     savefig(path*"/AD_likelihood.png")
     
-    resAD1 = [mean(exp.(rAD[subjects + 1,:,iterations])),mean(exp.(rAD[subjects + 2,:,iterations])),mean(exp.(rAD[subjects + 3,:,iterations]))]    
+    resAD1 = [mean(exp.(rAD[subjects + 1,:,iterations])), mean(exp.(rAD[subjects + 2,:,iterations])), mean(exp.(rAD[subjects + 3,:,iterations]))]    
+    varAD1 = [ std(exp.(rAD[subjects + 1,:,iterations])),  std(exp.(rAD[subjects + 2,:,iterations])),  std(exp.(rAD[subjects + 3,:,iterations]))]    
 
     # ad2 #
     iterations3 = Int(round(iterations/(mean(tAD)/mean(tMH))))
     elapsed3  = (mean(tAD/(iterations/iterations3)))
     elapsed3v =  (std(tAD/(iterations/iterations3)))
 
-    @printf("Time Elapsed for AD1: %.0f ± %.0f s\n", elapsed3, elapsed3v)    
+    @printf("Time Elapsed for AD2: %.0f ± %.0f s\n", elapsed3, elapsed3v)    
     write(f, @sprintf("Time Elapsed for AD1: %.0f ± %.0f s\n", elapsed3, elapsed3v))
 
     # plot comparison #
@@ -354,7 +356,8 @@ function pilotComp(path, true_val, Y, subjects, dt, error, chains, ratio, partic
     plot_comp(lMH,lAD,iterations3,"loglikelihood")
     savefig(path*"/comp_likelihood.png")
 
-    resAD2 = [mean(exp.(rAD[subjects + 1,:,iterations3])),mean(exp.(rAD[subjects + 2,:,iterations3])),mean(exp.(rAD[subjects + 3,:,iterations3]))]
+    resAD2 = [mean(exp.(rAD[subjects + 1,:,iterations3])),mean(exp.(rAD[subjects + 2,:,iterations3])), mean(exp.(rAD[subjects + 3,:,iterations3]))]
+    varAD2 = [ std(exp.(rAD[subjects + 1,:,iterations3])), std(exp.(rAD[subjects + 2,:,iterations3])),  std(exp.(rAD[subjects + 3,:,iterations3]))]
     
     absMH  = abs.(true_val-resMH)
     absAD1 = abs.(true_val-resAD1)
@@ -363,6 +366,10 @@ function pilotComp(path, true_val, Y, subjects, dt, error, chains, ratio, partic
     meanLikMH  = mean(lMH[burnin:iterations])
     meanLikAD1 = mean(lAD[:,iterations])
     meanLikAD2 = mean(lAD[:,iterations3])
+
+    varLikMH  = std(lMH[burnin:iterations])
+    varLikAD1 = std(lAD[:,iterations])
+    varLikAD2 = std(lAD[:,iterations3])
 
     write(f, @sprintf("Component Results for MH: %.2f, %.4f, %.4f\n", resMH[1], resMH[2], resMH[3]))
     write(f, @sprintf("Component Results for AD1: %.2f, %.4f, %.4f\n", resAD1[1], resAD1[2], resAD1[3]))
@@ -378,9 +385,9 @@ function pilotComp(path, true_val, Y, subjects, dt, error, chains, ratio, partic
     close(f)
 
     f = open(path*"/tab.txt", "w");
-    write(f, @sprintf("Gibbs & %.0f ± %.0f s & (%.2f, %.4f, %.4f) & (%.2f, %.4f, %.4f) & %f \\\\ \n", mean(tMH), std(tMH), resMH[1], resMH[2], resMH[3], absMH[1], absMH[2], absMH[3], meanLikMH))
-    write(f, @sprintf("SAD1 & %.0f ± %.0f s & (%.2f, %.4f, %.4f) & (%.2f, %.4f, %.4f) & %f \\\\ \n", mean(tAD), std(tAD), resAD1[1], resAD1[2], resAD1[3], absAD1[1], absAD1[2], absAD1[3], meanLikAD1))
-    write(f, @sprintf("SAD2 & %.0f ± %.0f s & (%.2f, %.4f, %.4f) & (%.2f, %.4f, %.4f) & %f \\\\ [1ex]\n", elapsed3, elapsed3v, resAD2[1], resAD2[2], resAD2[3], absAD2[1], absAD2[2], absAD2[3], meanLikAD2))
+    write(f, @sprintf("Gibbs & %.0f & %.0f s & (%.2f ± %.2f, %.4f ± %.4f, %.4f ± %.4f)  & %f ± %f \\\\ \n", mean(tMH), std(tMH), resMH[1], varMH[1], resMH[2], varMH[2], resMH[3], varMH[3], meanLikMH,varLikMH))
+    write(f, @sprintf("SAD1 & %.0f & %.0f s & (%.2f ± %.2f, %.4f ± %.4f, %.4f ± %.4f)  & %f ± %f \\\\ \n", mean(tAD), std(tAD), resAD1[1], varAD1[1], resAD1[2], varAD1[2], resAD1[3], varAD1[3], meanLikAD1,varLikAD1))
+    write(f, @sprintf("SAD2 & %.0f & %.0f s & (%.2f ± %.2f, %.4f ± %.4f, %.4f ± %.4f)  & %f ± %f \\\\ [1ex]\n", elapsed3, elapsed3v, resAD2[1], varAD2[1], resAD2[2], varAD2[2], resAD2[3], varAD2[3], meanLikAD2,varLikAD2))
     close(f)
 
     return [resMH, resAD1, resAD2], [absMH, absAD1, absAD2], [meanLikMH, meanLikAD1, meanLikAD2]
@@ -391,7 +398,7 @@ function plot_path(arr, title, blue, val = -1000);
     c = length(arr[:,1])
     av = mean(arr, dims = 1);
     
-    pl = plot(arr[1,:], xlabel="Iterations", ylabel=title, label="Individual Paths", lw = 1, lc=:gray)
+    pl = plot(arr[1,:], xlabel="Iterations", ylabel=title, label="Individual Paths", lw = 1, lc=:gray, guidefontsize=15)
     for i in 2:c
         plot!(arr[i,:], label = "", lw = 1, lc=:gray)
     end
@@ -413,7 +420,7 @@ function plot_comp(arrMH, arrAD, comp, title, val = -1000);
     avAD = mean(arrAD, dims = 1);
     #stdAD = std(arrAD, dims = 1);
     
-    pl = plot(avMH[:], xlabel="Iterations", ylabel=title, label="Gibbs", lw = 2, lc=:blue)
+    pl = plot(avMH[:], xlabel="Iterations", ylabel=title, label="Gibbs", lw = 2, lc=:blue, guidefontsize=15)
     plot!(avAD[:], label="SAD", lw = 2, lc=:red)
     vline!([comp],label = "Cut for Comparison", lw = 1.5, lc=:black, linestyle=:dash)
     if val != -1000
@@ -435,7 +442,7 @@ start = 0;
 error = 1;
 
 chains = 5;
-ratio = 5;
+ratio = 3;
 particles = 200;
 iterations = 3000;
 
@@ -465,7 +472,7 @@ start = 0;
 error = 1;
 
 chains = 5;
-ratio = 5;
+ratio = 3;
 particles = 200;
 iterations = 3000;
 
@@ -495,7 +502,7 @@ start = 0;
 error = 1;
 
 chains = 5;
-ratio = 5;
+ratio = 3;
 particles = 200;
 iterations = 3000;
 
@@ -511,4 +518,34 @@ Random.seed!(123);
 X, Y, true_val = EulerMaruyama(theta_d, subjects, obs, dt, start, Normal(0,error));
 
 path = "chained/mixed14";
+r, a, l = pilotComp(path, theta, Y, subjects, dt, error, chains, ratio, particles, iterations, prior, vars, theta_v[1]);
+
+# run 5 (more iterations) #
+theta   = [15, 0.01, 0.1];
+theta_v = [5, 0, 0];
+theta_d = [Normal(theta[i],theta_v[i]) for i in 1:3];
+
+subjects = 10;
+obs = 20;
+dt = 50;
+start = 0;
+error = 1;
+
+chains = 5;
+ratio = 3;
+particles = 200;
+iterations = 10000;
+
+vars = [2,0.0005,0.01];
+
+prior_alpha = Normal(20,10);
+prior_beta  = Uniform(0,0.1);
+prior_sigma = Uniform(0,0.5);
+
+prior = [prior_alpha, prior_beta, prior_sigma];
+
+Random.seed!(123);
+X, Y, true_val = EulerMaruyama(theta_d, subjects, obs, dt, start, Normal(0,error));    
+
+path = "chained/mixed15";
 r, a, l = pilotComp(path, theta, Y, subjects, dt, error, chains, ratio, particles, iterations, prior, vars, theta_v[1]);
